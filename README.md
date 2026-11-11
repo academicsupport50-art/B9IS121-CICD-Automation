@@ -58,15 +58,6 @@ docker run --rm -p 8080:8080 b9is121-cloudops-api:local
 
 Then open `http://localhost:8080/healthz`.
 
-## Cloud infrastructure setup
-
-Infrastructure is defined in Terraform under `infra/`. Review all files before applying; Terraform creates Google Cloud resources, service accounts, IAM bindings, a Workload Identity provider, Artifact Registry and a public Cloud Run service.
-
-1. Create/select a dedicated Google Cloud project and enable billing. Review current Cloud Run and Artifact Registry prices and set a budget alert.
-2. Install Terraform 1.6+ and Google Cloud CLI. Sign in with an account that has permission to create resources and modify IAM.
-3. Copy `infra/terraform.tfvars.example` to `infra/terraform.tfvars`. Set the real project ID and the exact GitHub repository value `academicsupport50-art/B9IS121-CICD-Automation`. Keep `terraform.tfvars` private; it is ignored by Git.
-4. Run:
-
 ```bash
 terraform -chdir=infra init
 terraform -chdir=infra validate
