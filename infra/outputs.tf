@@ -1,15 +1,24 @@
 output "service_url" {
-  value = google_cloud_run_v2_service.api.uri
+  description = "Public HTTPS URL of the Cloud Run service."
+  value       = google_cloud_run_v2_service.api.uri
 }
+
 output "artifact_registry_repository" {
-  value = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.images.repository_id}"
+  description = "Artifact Registry repository path."
+  value       = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.images.repository_id}"
 }
+
 output "workload_identity_provider" {
-  value = google_iam_workload_identity_pool_provider.github.name
+  description = "Full Workload Identity Provider resource name for GitHub Actions."
+  value       = google_iam_workload_identity_pool_provider.github.name
 }
+
 output "deployer_service_account" {
-  value = google_service_account.deployer.email
+  description = "Federated deployment service account email."
+  value       = google_service_account.deployer.email
 }
+
 output "runtime_service_account" {
-  value = google_service_account.runtime.email
+  description = "Least-privilege Cloud Run runtime service account email."
+  value       = google_service_account.runtime.email
 }

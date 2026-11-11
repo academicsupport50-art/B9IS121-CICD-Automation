@@ -1,0 +1,16 @@
+flowchart LR
+  Dev[Developer] -->|Git commit / push| Repo[GitHub repository]
+  Repo -->|main branch trigger| Actions[GitHub Actions]
+  Actions --> Test[Ruff + Bandit + pip-audit + pytest]
+  Test --> TerraformCheck[Terraform fmt and validate]
+  TerraformCheck --> Build[Docker build]
+  Build --> Scan[Trivy image scan]
+  Scan -->|Pass| Registry[Google Artifact Registry<br/>commit-SHA tag]
+  Registry -->|deploy| Run[Google Cloud Run<br/>HTTPS / revisions / autoscaling]
+  Actions -. OIDC token .-> WIF[Google Cloud Workload Identity Federation]
+  WIF -. short-lived identity .-> IAM[Scoped deployer service account]
+  Terraform[Terraform] --> Registry
+  Terraform --> IAM
+  Terraform --> Run
+  Run --> Postman[Postman + smoke tests]
+  Run --> Users[Public API consumers]
