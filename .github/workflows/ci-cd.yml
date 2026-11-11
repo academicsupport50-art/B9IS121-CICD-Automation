@@ -1,0 +1,99 @@
+name: CI - Test, Scan, Publish and Deploy
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  REGION: ${{ vars.GCP_REGION }}
+  AR_REPOSITORY: ${{ vars.GCP_AR_REPOSITORY }}
+  SERVICE: b9is121-cloudops-api
+  RUNTIME_SERVICE_ACCOUNT: ${{ vars.GCP_RUNTIME_SA }}
+jobs:
+  validate-build-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      image: ${{ steps.image.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install --upgrade pip && pip install -r requirements-dev.txt
+      - run: ruff check app tests
+      - run: bandit -q -r app -ll
+      - run: pip-audit -r requirements.txt
+      - run: pytest -q --junitxml=test-results.xml
+      - run: docker build --pull -t b9is121-cloudops-api:${GITHUB_SHA} .
+      - uses: aquasecurity/trivy-action@0.36.0
+        with:
+          scan-type: image
+          image-ref: b9is121-cloudops-api:${{ github.sha }}
+          format: table
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+      - id: image
+        if: github.event_name != 'pull_request'
+        run: |
+          IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPOSITORY}/b9is121-cloudops-api:${GITHUB_SHA}"
+          docker tag "b9is121-cloudops-api:${GITHUB_SHA}" "${IMAGE}"
+          docker save "${IMAGE}" -o image.tar
+          echo "image=${IMAGE}" >> "$GITHUB_OUTPUT"
+      - if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: verified-container-image
+          path: image.tar
+          retention-days: 1
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-test-results
+          path: test-results.xml
+          if-no-files-found: ignore
+          retention-days: 14
+  deploy:
+    needs: validate-build-scan
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: verified-container-image
+      - run: docker load -i image.tar
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SA }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - run: gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+      - run: docker push "${{ needs.validate-build-scan.outputs.image }}"
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy "${SERVICE}" \
+            --image "${{ needs.validate-build-scan.outputs.image }}" \
+            --region "${REGION}" --project "${PROJECT_ID}" \
+            --service-account "${RUNTIME_SERVICE_ACCOUNT}" \
+            --port 8080 --memory 512Mi --cpu 1 \
+            --concurrency 80 --max 3 --min 0 \
+            --set-env-vars "APP_ENV=production,BUILD_SHA=${GITHUB_SHA}" --quiet
+      - name: Verify deployment and commit identity
+        run: |
+          URL="$(gcloud run services describe "${SERVICE}" --region "${REGION}" --project "${PROJECT_ID}" --format='value(status.url)')"
+          test -n "$URL"
+          curl --fail --silent --show-error --retry 5 --retry-delay 5 "$URL/healthz"
+          curl --fail --silent --show-error "$URL/api/v1/info" | python -c "import json,sys; assert json.load(sys.stdin)['build_sha']=='${GITHUB_SHA}'"
+          echo "Verified Cloud Run URL: $URL" >> "$GITHUB_STEP_SUMMARY"
