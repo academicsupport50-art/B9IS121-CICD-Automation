@@ -103,7 +103,7 @@ The Terraform configuration creates a publicly invokable Cloud Run service becau
 
 The workflow is `.github/workflows/ci-cd.yml` and runs for pull requests, pushes to `main`, and manual dispatch. It performs Ruff linting, Bandit static checks, pip-audit dependency auditing, pytest, Docker build and Trivy image scanning. On a successful main-branch push it transfers the exact scanned image to the deploy job, authenticates using OIDC federation, pushes the commit-SHA-tagged image to Artifact Registry, deploys to Cloud Run and verifies both `/healthz` and the deployed `build_sha`.
 
-Third-party GitHub Actions are pinned to full commit SHAs to improve supply-chain traceability. The deploy job alone receives `id-token: write`.
+GitHub Actions are currently referenced by version tags for readability. This is a documented supply-chain limitation; a production deployment should pin each third-party action to a reviewed full commit SHA. The deploy job alone receives `id-token: write`. If the six Google Cloud repository variables are not yet configured, the workflow still runs validation, tests, Docker build and image scanning, then skips cloud deployment with an explanatory job summary.
 
 ## Postman
 

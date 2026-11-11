@@ -58,8 +58,8 @@ RESOURCES: list[dict[str, str]] = [
     },
     {
         "id": "cloud-run",
-        "name": "Cloud hosting",
-        "role": "Cloud Run",
+        "name": "Cloud Run",
+        "role": "Cloud hosting",
         "description": "Runs the container as a managed HTTPS service with autoscaling.",
     },
 ]

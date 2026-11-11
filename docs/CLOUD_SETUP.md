@@ -33,6 +33,9 @@ Use the exact values from Terraform outputs. The WIF provider is restricted to t
 
 ## Verify
 
+If the six GitHub repository variables are not yet present, the workflow deliberately completes CI validation and skips the cloud deployment job. Configure all six variables before expecting Artifact Registry publication and Cloud Run deployment.
+
+
 After IAM propagation, push a new commit to `main`. Confirm that the GitHub Actions validation job passes all lint, security, dependency, test, build and scan steps. Then confirm that the deploy job publishes the same scanned image and completes Cloud Run deployment.
 
 Use the URL in the Actions job summary to check `/healthz`, `/api/v1/info` and `/docs`. The information endpoint must report the same commit SHA as the workflow run. Import the Postman collection and record actual HTTP statuses, response bodies, response times and assertion results.
