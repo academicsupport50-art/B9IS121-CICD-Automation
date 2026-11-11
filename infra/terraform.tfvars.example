@@ -1,0 +1,5 @@
+project_id = "REPLACE_WITH_PROJECT_ID"
+region = "asia-south1"
+repository_id = "b9is121-images"
+service_name = "b9is121-cloudops-api"
+github_repository = "YOUR_GITHUB_OWNER/B9IS121-CICD-Automation"
