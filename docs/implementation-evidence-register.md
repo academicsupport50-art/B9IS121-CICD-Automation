@@ -1,23 +1,20 @@
 # Implementation evidence register
 
-This register distinguishes repository artefacts from execution evidence. A committed configuration file proves that the configuration exists; it does not prove that a remote build or deployment succeeded.
+Status is deliberately conservative: only observed checks are marked as verified.
 
-| Assessment item | Current status | Evidence required before claiming completion |
+| Item | Status | Required proof |
 |---|---|---|
-| FastAPI application | Source committed | Repository source and local/CI test result |
-| Automated tests | Nine tests are included; latest remote run has not yet been verified | Successful pytest job log and JUnit artifact |
-| Python static security | Bandit and pip-audit configured | Successful job output and audit report |
-| Docker build | Configured in GitHub Actions; remote execution pending | Successful Docker build step |
-| Terraform configuration | Committed; CI formatting and validation configured | Successful Terraform fmt and validate steps |
-| GitHub Actions | Workflow committed; latest observed run is queued | Completed successful workflow run and job logs |
-| Trivy image scan | Configured to fail on HIGH/CRITICAL findings | Scan report for the exact image later deployed |
-| Artifact Registry image | Not published / not verified | Commit-SHA image tag and digest in registry |
-| Google Cloud infrastructure | Terraform prepared; not applied | Successful Terraform apply and outputs |
-| Cloud Run | Not deployed / not verified | Public HTTPS URL and active revision |
-| Postman | Collection committed; no live run verified | Actual endpoint URL, HTTP status, response body, response time and passing assertions |
-| Commit-triggered update | Not demonstrated | Two distinct source commits linked to two Cloud Run revisions |
-| Presentation video | Slides and script prepared | 7–10 minute unlisted YouTube or accessible Drive URL |
+| FastAPI application | Source committed; 9 local tests pass; 7 local HTTP smoke cases pass (200/404/422) | Repository source, pytest output and `docs/local-http-smoke-test-results.txt` |
+| Automated tests | 9 tests passed in the preparation runtime | GitHub Actions test-step result is still required |
+| Docker build | Not executed in the preparation runtime | Successful Docker build and local container response |
+| Terraform | Configuration committed; not applied | Terraform fmt/validate/plan/apply output from the target project |
+| GitHub Actions | Workflow committed; push runs have been created but are queued; first observed run's setup step reported failure | A completed successful validation job and accessible job logs |
+| Artifact Registry | Not published | Image tag and digest from the actual registry |
+| Cloud Run | Not deployed | Public HTTPS URL, active revision and service settings |
+| Postman | Collection and example environment prepared; not run in Postman against a live endpoint | Actual request URLs, response bodies, status codes and assertion results |
+| Commit-triggered update | Not demonstrated | Two source commits, two image tags, two Cloud Run revisions and matching build SHA values |
+| Presentation | Slides and speaking script prepared; no recording | Unlisted YouTube or lecturer-accessible Google Drive video link |
 
-## Evidence integrity rule
+The latest main-branch source commit is recorded in GitHub. At the last check, the newest Actions run was queued and the first run's only reported step was a failed job setup; no successful pipeline execution or cloud deployment is claimed. The job log retrieval did not complete, so the root cause of the runner setup issue is unknown.
 
-Never invent screenshots, test logs, cloud URLs, image digests, HTTP responses or deployment outcomes. Update this register only after the relevant step has been executed and independently checked.
+Do not fabricate screenshots, logs, URLs, response results or a presentation recording. Update this register only when evidence is captured from the actual service or account.

@@ -1,0 +1,18 @@
+B9IS121 CloudOps API — local HTTP smoke-test evidence
+Captured: 12 November 2026
+Server: Uvicorn on http://127.0.0.1:8088 (local preparation runtime)
+Scope: Direct Python process; this is not a Docker container, public Cloud Run endpoint or Postman execution.
+
+| Method | Path | Observed status | Result |
+|---|---|---:|---|
+| GET | /healthz | 200 | PASS — {"status":"ok"} |
+| GET | /api/v1/info | 200 | PASS — service metadata returned; build_sha=local |
+| GET | /api/v1/resources | 200 | PASS — count=5 |
+| GET | /api/v1/resources/github | 200 | PASS — GitHub resource returned |
+| GET | /api/v1/resources/missing | 404 | PASS — {"detail":"Resource not found"} |
+| POST | /api/v1/echo with a non-empty message | 200 | PASS — request echoed with correlation ID |
+| POST | /api/v1/echo with an empty message | 422 | PASS — Pydantic validation error returned |
+
+Automated application suite: `python -m pytest -q` → 9 passed.
+
+Interpretation: The local API process and expected positive/negative HTTP behaviour were verified. These results do not establish that the Docker image builds, the GitHub workflow succeeds, the cloud service is deployed, or the Postman collection has been run against a live endpoint.
